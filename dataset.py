@@ -2,6 +2,7 @@ import csv
 import itertools
 import pickle
 import numpy as np
+from sklearn.model_selection import KFold
 
 
 FILE_NAME = 'TissuePrediction_train'
@@ -9,7 +10,7 @@ FILE_NAME = 'TissuePrediction_train'
 
 class DataLoader:
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, n_splits=5, shuffle=True):
         """
         Attribute
         ---------
@@ -24,6 +25,9 @@ class DataLoader:
         if not self.load():
             self.x_label, self.x_data, self.y_data, self.y_embedding = self.load_txt()
             self.dump()
+
+        cv = KFold(n_splits=n_splits, shuffle=shuffle)
+        self.kfold_split = list(cv.split(self.x_data))
 
     def dump(self, dump_name='./{}.pkl'.format(FILE_NAME)):
         with open(dump_name, 'wb') as f:
@@ -70,11 +74,17 @@ class DataLoader:
     def get_x_label(self, item):
         return self.x_label[item]
 
+    def get_train_test_xy(self, fold):
+        X = np.asarray(self.x_data, dtype=np.float32)
+        y = np.asarray(self.y_data, dtype=int)
+        train_idx, test_idx = self.kfold_split[fold]
+        return X[train_idx], y[train_idx], X[test_idx], y[test_idx]
+
 
 if __name__ == '__main__':
     loader = DataLoader('{}.txt'.format(FILE_NAME))
-    for i, (x, y) in enumerate(loader):
-        print(y, x)
-        if i > 10:
-            break
-    print(len(loader))
+    X_train, y_train, X_test, y_test = loader.get_train_test_xy(0)
+    print(X_train, len(X_train))
+    print(y_train, len(y_train))
+    print(X_test, len(X_test))
+    print(y_test, len(y_test))
