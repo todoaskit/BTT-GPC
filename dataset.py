@@ -1,6 +1,8 @@
 import csv
 import itertools
 import pickle
+from typing import Callable
+
 import numpy as np
 from sklearn.model_selection import KFold
 
@@ -79,6 +81,12 @@ class DataLoader:
         y = np.asarray(self.y_data, dtype=int)
         train_idx, test_idx = self.kfold_split[fold]
         return X[train_idx], y[train_idx], X[test_idx], y[test_idx]
+
+    def decomposition_x(self, decomposition_func: Callable, **kwargs):
+        decmp = decomposition_func(**kwargs)
+        decmp.fit(self.x_data)
+        self.x_data = decmp.transform(self.x_data)
+        print('Data decomposition: {}, {}'.format(decomposition_func.__name__, kwargs))
 
 
 if __name__ == '__main__':
