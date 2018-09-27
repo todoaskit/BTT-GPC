@@ -1,11 +1,16 @@
 import csv
 import itertools
 import pickle
+import random
 from typing import Callable
 
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
+from sklearn import decomposition
+from sklearn import manifold
 
+from useful import timeit
 
 FILE_NAME = 'TissuePrediction_train'
 
@@ -82,17 +87,34 @@ class DataLoader:
         train_idx, test_idx = self.kfold_split[fold]
         return X[train_idx], y[train_idx], X[test_idx], y[test_idx]
 
-    def decomposition_x(self, decomposition_func: Callable, **kwargs):
-        decmp = decomposition_func(**kwargs)
-        decmp.fit(self.x_data)
-        self.x_data = decmp.transform(self.x_data)
-        print('Data decomposition: {}, {}'.format(decomposition_func.__name__, kwargs))
+    def get_transform_x(self, transform_func: Callable, **kwargs):
+        trans = transform_func(**kwargs)
+        transformed_x_data = trans.fit_transform(self.x_data)
+        return transformed_x_data
+
+    @timeit
+    def transform_x(self, transform_func: Callable, **kwargs):
+        self.x_data = self.get_transform_x(transform_func, **kwargs)
+        print('Transform: {}, {}'.format(transform_func.__name__, kwargs))
+
+    def display_2d(self, transform_func: Callable):
+        x_data_2d = self.get_transform_x(transform_func, n_components=2, random_state=13)
+
+        random_color = lambda: "#%06x" % random.randint(0, 0xFFFFFF)
+        y_to_color = {label: random_color() for label in self.y_embedding.values()}
+        colors = np.empty(0, dtype='float')
+        for y in self.y_data:
+            colors = np.append(colors, y_to_color[y])
+
+        x_coord = x_data_2d[:, 0]
+        y_coord = x_data_2d[:, 1]
+
+        plt.scatter(x_coord, y_coord, c=colors, s=10)
+        plt.xlim(x_coord.min() + 0.00005, x_coord.max() + 0.00005)
+        plt.ylim(y_coord.min() + 0.00005, y_coord.max() + 0.00005)
+        plt.show()
 
 
 if __name__ == '__main__':
     loader = DataLoader('{}.txt'.format(FILE_NAME))
-    X_train, y_train, X_test, y_test = loader.get_train_test_xy(0)
-    print(X_train, len(X_train))
-    print(y_train, len(y_train))
-    print(X_test, len(X_test))
-    print(y_test, len(y_test))
+    loader.display_2d(manifold.TSNE)

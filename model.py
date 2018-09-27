@@ -8,6 +8,7 @@ from sklearn.metrics.classification import accuracy_score, log_loss
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import decomposition
+from sklearn.manifold import TSNE
 
 from dataset import DataLoader, FILE_NAME
 from useful import timeit
@@ -25,7 +26,7 @@ class GPC:
     def __init__(self, kernel_list, n_splits=5):
         # Data
         self.loader = DataLoader('{}.txt'.format(FILE_NAME))
-        self.loader.decomposition_x(decomposition.PCA, n_components=10000)
+        self.loader.transform_x(TSNE, n_components=3)
 
         # Model
         self.gpc_dict: Dict[int, List[GaussianProcessClassifier]] = defaultdict(list)
