@@ -10,6 +10,7 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn import decomposition
 
 from dataset import DataLoader, FILE_NAME
+from useful import timeit
 
 """
 Reference
@@ -34,12 +35,14 @@ class GPC:
 
         print('initialized with {} kernels, {} n_splits'.format(len(kernel_list), n_splits))
 
+    @timeit
     def fit(self, fold):
         X_train, y_train, X_test, y_test = self.loader.get_train_test_xy(fold)
         for gpc in self.gpc_dict[fold]:
             gpc.fit(X_train, y_train)
             print('fit: {}'.format(gpc.kernel))
 
+    @timeit
     def eval(self, fold):
         X_train, y_train, X_test, y_test = self.loader.get_train_test_xy(fold)
         for gpc in self.gpc_dict[fold]:
