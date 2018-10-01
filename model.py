@@ -29,25 +29,27 @@ class GPC:
 
     def __init__(self, kernel, loader: DataLoader = None, n_splits: int = 5):
         # Data
-        self.loader = loader or DataLoader('{}.txt'.format(FILE_NAME))
+        self.loader = loader or DataLoader('{}.txt'.format(FILE_NAME), n_splits=n_splits)
         if not loader:
             self.loader.transform_x(manifold.TSNE, n_components=3)
 
         # Model
         self.gpc_dict: Dict[int, GaussianProcessClassifier] = dict()
-        for k in range(n_splits):
+        for k in range(loader.get_n_splits()):
             self.gpc_dict[k] = GaussianProcessClassifier(kernel=deepcopy(kernel))
 
-        print('initialized with {}, n_splits: {}'.format(kernel, n_splits))
+        print('initialized with {}, n_splits: {}'.format(kernel, loader.get_n_splits()))
 
     @timeit
     def fit(self, fold):
+        assert fold < self.loader.get_n_splits(), "fold >= {}".format(self.loader.get_n_splits())
         X_train, y_train, X_test, y_test = self.loader.get_train_test_xy(fold)
         self.gpc_dict[fold].fit(X_train, y_train)
         print('fit: {}'.format(self.gpc_dict[fold].kernel))
 
     @timeit
     def eval(self, fold):
+        assert fold < self.loader.get_n_splits(), "fold >= {}".format(self.loader.get_n_splits())
         X_train, y_train, X_test, y_test = self.loader.get_train_test_xy(fold)
         gpc = self.gpc_dict[fold]
         train_acc = accuracy_score(y_train, gpc.predict(X_train))

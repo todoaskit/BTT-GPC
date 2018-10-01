@@ -81,6 +81,9 @@ class DataLoader:
     def get_x_label(self, item):
         return self.x_label[item]
 
+    def get_n_splits(self):
+        return len(self.kfold_split)
+
     def get_train_test_xy(self, fold):
         X = np.asarray(self.x_data, dtype=np.float32)
         y = np.asarray(self.y_data, dtype=int)
