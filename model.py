@@ -48,24 +48,44 @@ class GPC:
         print('fit: {}'.format(self.gpc_dict[fold].kernel))
 
     @timeit
-    def eval(self, fold):
+    def eval(self, fold, print_result=True):
         assert fold < self.loader.get_n_splits(), "fold >= {}".format(self.loader.get_n_splits())
         X_train, y_train, X_test, y_test = self.loader.get_train_test_xy(fold)
         gpc = self.gpc_dict[fold]
         train_acc = accuracy_score(y_train, gpc.predict(X_train))
         test_acc = accuracy_score(y_test, gpc.predict(X_test))
-        print("Fold: {}, Kernel: {}".format(fold, gpc.kernel))
-        print("Train Acc: {}".format(train_acc))
-        print("Test Acc: {}".format(test_acc))
-        print("=" * 10)
 
-    def run(self, fold):
+        if print_result:
+            print("Fold: {}, Kernel: {}".format(fold, gpc.kernel))
+            print("Train Acc: {}".format(train_acc))
+            print("Test Acc: {}".format(test_acc))
+            print("=" * 10)
+
+        return train_acc, test_acc
+
+    def run(self, fold, print_result=True):
         self.fit(fold)
-        self.eval(fold)
+        return self.eval(fold, print_result=print_result)
 
-    def run_all(self):
-        for fold in range(len(self.gpc_dict)):
-            self.run(fold)
+    def run_all(self, print_result=True):
+        train_acc_list, test_acc_list = [], []
+        for fold in range(self.loader.get_n_splits()):
+            train_acc, test_acc = self.run(fold, print_result=False)
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
+
+        train_acc_avg = np.average(train_acc_list)
+        train_acc_stdev = np.std(train_acc_list)
+        test_acc_avg = np.average(test_acc_list)
+        test_acc_stdev = np.std(test_acc_list)
+
+        if print_result:
+            print("K-fold: {}, Kernel: {}".format(self.loader.get_n_splits(), self.gpc_dict[0].kernel))
+            print("Train Acc: {} (+/- {})".format(train_acc_avg, train_acc_stdev))
+            print("Test Acc: {} (+/- {})".format(test_acc_avg, test_acc_stdev))
+            print("=" * 10)
+
+        return train_acc_list, test_acc_list
 
 
 if __name__ == '__main__':
@@ -75,21 +95,15 @@ if __name__ == '__main__':
     data_loader = DataLoader('{}.txt'.format(FILE_NAME))
     data_loader.transform_x(manifold.TSNE, n_components=3)
 
-    kernels = [
-        1.0 * Matern(length_scale=random() * randrange(1, 5),
-                     length_scale_bounds=(1e-5, 1e5),
-                     nu=2.5)
-        + 1.0 * Matern(length_scale=random() * randrange(1, 5),
-                       length_scale_bounds=(1e-5, 1e5),
-                       nu=1.5)
-    ]
+    now_kernel = 1.0 * Matern(length_scale=random() * randrange(1, 5),
+                              length_scale_bounds=(1e-5, 1e5),
+                              nu=1.5)
 
-    for now_kernel in kernels:
-        try:
-            gp_classifier = GPC(
-                kernel=now_kernel,
-                loader=data_loader,
-            )
-            gp_classifier.run(fold=now_fold)
-        except Exception as e:
-            print(e)
+    try:
+        gp_classifier = GPC(
+            kernel=now_kernel,
+            loader=data_loader,
+        )
+        gp_classifier.run(fold=now_fold)
+    except Exception as e:
+        print(e)
