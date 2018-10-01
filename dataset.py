@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 from sklearn import decomposition
 from sklearn import manifold
+from sklearn.preprocessing import MinMaxScaler
 
 from useful import timeit
 
@@ -98,6 +99,9 @@ class DataLoader:
     @timeit
     def transform_x(self, transform_func: Callable, **kwargs):
         self.x_data = self.get_transform_x(transform_func, **kwargs)
+        scaler = MinMaxScaler()
+        scaler.fit(self.x_data)
+        self.x_data = scaler.transform(self.x_data)
         print('Transform: {}, {}'.format(transform_func.__name__, kwargs))
 
     def display_2d(self, transform_func: Callable):
