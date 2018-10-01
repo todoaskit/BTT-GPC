@@ -27,7 +27,7 @@ http://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernel
 
 class GPC:
 
-    def __init__(self, kernel, loader: DataLoader = None, n_splits: int = 5):
+    def __init__(self, kernel, loader: DataLoader = None, n_splits: int = 5, **kwargs):
         # Data
         self.loader = loader or DataLoader('{}.txt'.format(FILE_NAME), n_splits=n_splits)
         if not loader:
@@ -36,7 +36,7 @@ class GPC:
         # Model
         self.gpc_dict: Dict[int, GaussianProcessClassifier] = dict()
         for k in range(loader.get_n_splits()):
-            self.gpc_dict[k] = GaussianProcessClassifier(kernel=deepcopy(kernel))
+            self.gpc_dict[k] = GaussianProcessClassifier(kernel=deepcopy(kernel), **kwargs)
 
         print('initialized with {}, n_splits: {}'.format(kernel, loader.get_n_splits()))
 
@@ -103,6 +103,7 @@ if __name__ == '__main__':
         gp_classifier = GPC(
             kernel=now_kernel,
             loader=data_loader,
+            n_restarts_optimizer=2,
         )
         gp_classifier.run(fold=now_fold)
     except Exception as e:
