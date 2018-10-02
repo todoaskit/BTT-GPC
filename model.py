@@ -93,11 +93,9 @@ if __name__ == '__main__':
     now_fold = 0
 
     data_loader = DataLoader('{}.txt'.format(FILE_NAME))
-    data_loader.transform_x(manifold.TSNE, n_components=3)
+    data_loader.transform_x(decomposition.PCA, n_components=80)
 
-    now_kernel = 1.0 * Matern(length_scale=random() * randrange(1, 5),
-                              length_scale_bounds=(1e-5, 1e5),
-                              nu=1.5)
+    now_kernel = Matern(nu=1.5) + Matern(nu=2.5)
 
     try:
         gp_classifier = GPC(

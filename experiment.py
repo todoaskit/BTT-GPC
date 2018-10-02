@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn import decomposition
 
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
@@ -65,6 +66,7 @@ def print_grid_search(clf_instance, loader, params_to_search, cv=2):
 if __name__ == '__main__':
 
     data_loader = DataLoader('{}.txt'.format(FILE_NAME))
+    data_loader.transform_x(decomposition.PCA, n_components=80)
 
     run_experiment_all_folds(QuadraticDiscriminantAnalysis, data_loader)
     run_experiment_all_folds(AdaBoostClassifier, data_loader)
