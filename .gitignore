@@ -1,5 +1,6 @@
 *.pkl
 .idea
+*.tsv
 
 # Created by https://www.gitignore.io/api/vim,tex,text,macos,python,virtualenv
 
