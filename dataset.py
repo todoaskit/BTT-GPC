@@ -13,7 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from useful import timeit
 
-FILE_NAME = 'TissuePrediction_train'
+FILE_NAME = 'Brain_gene_exp.rm_donor_specific'
 
 
 class DataLoader:
@@ -123,5 +123,5 @@ class DataLoader:
 
 
 if __name__ == '__main__':
-    loader = DataLoader('{}.txt'.format(FILE_NAME))
+    loader = DataLoader('{}.tsv'.format(FILE_NAME))
     loader.display_2d(manifold.TSNE)
