@@ -92,17 +92,28 @@ if __name__ == '__main__':
 
     now_fold = 0
 
-    data_loader = DataLoader('{}.txt'.format(FILE_NAME))
+    data_loader = DataLoader('{}.tsv'.format(FILE_NAME))
     data_loader.transform_x(decomposition.PCA, n_components=80)
 
-    now_kernel = Matern(nu=1.5) + Matern(nu=2.5)
+    kernel_list = [
+        Matern(0.5) + Matern(1.5) + Matern(nu=2.5),
+        random() * Matern(0.5) + random() * Matern(1.5) + random() * Matern(nu=2.5),
+        random() * Matern(0.5) + random() * Matern(1.5) + random() * Matern(nu=2.5),
+        random() * Matern(0.5) + random() * Matern(1.5) + random() * Matern(nu=2.5),
+    ]
 
-    try:
-        gp_classifier = GPC(
-            kernel=now_kernel,
-            loader=data_loader,
-            n_restarts_optimizer=2,
-        )
-        gp_classifier.run(fold=now_fold)
-    except Exception as e:
-        print(e)
+    results = []
+    for now_kernel in kernel_list:
+        try:
+            gp_classifier = GPC(
+                kernel=now_kernel,
+                loader=data_loader,
+                n_restarts_optimizer=2,
+            )
+            train_acc_result, test_acc_result = gp_classifier.run_all()
+            results.append((now_kernel, train_acc_result, test_acc_result))
+        except Exception as e:
+            print(e)
+
+    for k, tr, te in results:
+        print("\t".join(str(x) for x in [k, np.mean(tr), np.std(tr), np.mean(te), np.std(te)]))
