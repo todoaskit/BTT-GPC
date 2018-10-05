@@ -5,6 +5,7 @@ import random
 from typing import Callable
 
 import numpy as np
+import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
@@ -105,9 +106,8 @@ class DataLoader:
         self.x_data = scaler.transform(self.x_data)
         print('Transform: {}, {}'.format(transform_func.__name__, kwargs))
 
-    def get_colors(self):
-        random_color = lambda: "#%06x" % random.randint(0, 0xFFFFFF)
-        y_to_color = {label: random_color() for label in self.y_embedding.values()}
+    def get_colors(self, pal='hls'):
+        y_to_color = sns.color_palette(pal, len(self.y_embedding)).as_hex()
         colors = np.empty(0, dtype='float')
         for y in self.y_data:
             colors = np.append(colors, y_to_color[y])
@@ -115,7 +115,7 @@ class DataLoader:
 
     def display_2d(self, transform_func: Callable, **kwargs):
         colors = self.get_colors()
-        x_data_2d = self.get_transform_x(transform_func, n_components=2, random_state=13, **kwargs)
+        x_data_2d = self.get_transform_x(transform_func, n_components=2, **kwargs)
         x_coord = x_data_2d[:, 0]
         y_coord = x_data_2d[:, 1]
 
@@ -148,6 +148,6 @@ class DataLoader:
 if __name__ == '__main__':
     loader = DataLoader('{}.tsv'.format(FILE_NAME))
     loader.transform_x(decomposition.PCA, n_components=80)
-    loader.display_3d(manifold.TSNE, metric="correlation")
-    loader.display_3d(manifold.TSNE, metric="cosine")
-    loader.display_3d(manifold.TSNE)
+    loader.display_2d(manifold.TSNE, metric="correlation", random_state=21)
+    loader.display_2d(manifold.TSNE, metric="cosine", random_state=21)
+    loader.display_2d(manifold.TSNE, random_state=21)
