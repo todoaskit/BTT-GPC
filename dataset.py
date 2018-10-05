@@ -5,6 +5,7 @@ import random
 from typing import Callable
 
 import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 from sklearn import decomposition
@@ -104,15 +105,17 @@ class DataLoader:
         self.x_data = scaler.transform(self.x_data)
         print('Transform: {}, {}'.format(transform_func.__name__, kwargs))
 
-    def display_2d(self, transform_func: Callable):
-        x_data_2d = self.get_transform_x(transform_func, n_components=2, random_state=13)
-
+    def get_colors(self):
         random_color = lambda: "#%06x" % random.randint(0, 0xFFFFFF)
         y_to_color = {label: random_color() for label in self.y_embedding.values()}
         colors = np.empty(0, dtype='float')
         for y in self.y_data:
             colors = np.append(colors, y_to_color[y])
+        return colors
 
+    def display_2d(self, transform_func: Callable, **kwargs):
+        colors = self.get_colors()
+        x_data_2d = self.get_transform_x(transform_func, n_components=2, random_state=13, **kwargs)
         x_coord = x_data_2d[:, 0]
         y_coord = x_data_2d[:, 1]
 
@@ -121,7 +124,30 @@ class DataLoader:
         plt.ylim(y_coord.min() + 0.00005, y_coord.max() + 0.00005)
         plt.show()
 
+    def display_3d(self, transform_func: Callable, **kwargs):
+        colors = self.get_colors()
+        x_data_3d = self.get_transform_x(transform_func, n_components=3, **kwargs)
+        x_coord = x_data_3d[:, 0]
+        y_coord = x_data_3d[:, 1]
+        z_coord = x_data_3d[:, 2]
+
+        x_mean, y_mean, z_mean = map(np.mean, [x_coord, y_coord, z_coord])
+        x_std, y_std, z_std = map(np.std, [x_coord, y_coord, z_coord])
+
+        ax = plt.axes(projection='3d')
+        ax.scatter(x_coord, y_coord, z_coord, c=colors, s=10)
+        ax.set_xlim3d(x_mean - 1.3 * x_std, x_mean + 1.3 * x_std)
+        ax.set_ylim3d(y_mean - 1.3 * y_std, y_mean + 1.3 * y_std)
+        ax.set_zlim3d(z_mean - 1.3 * z_std, z_mean + 1.3 * z_std)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.show()
+
 
 if __name__ == '__main__':
     loader = DataLoader('{}.tsv'.format(FILE_NAME))
-    loader.display_2d(manifold.TSNE)
+    loader.transform_x(decomposition.PCA, n_components=80)
+    loader.display_3d(manifold.TSNE, metric="correlation")
+    loader.display_3d(manifold.TSNE, metric="cosine")
+    loader.display_3d(manifold.TSNE)
